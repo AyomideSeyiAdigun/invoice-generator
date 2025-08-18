@@ -26,6 +26,7 @@
   padding: 10px;
   font-size: 13px;
   text-align: left;
+
 }
 
 .invoice-table th {
@@ -37,6 +38,9 @@
 .invoice-table td input {
   width: calc(100% - 12px);
   padding: 6px;
+  padding-bottom: 0px;
+  padding-top: 0px;
+  height: 30px;
   border: none;
   outline: none;
   font-size: 13px;
