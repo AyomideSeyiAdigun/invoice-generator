@@ -20,27 +20,49 @@ const InvoicePage: React.FC = () => {
 
       setTimeout(async () => {
           if (invoiceRef.current) {
-      // hide controls before capture
-      const buttons = invoiceRef.current.querySelectorAll(".no-print");
-      buttons.forEach((btn) => (btn as HTMLElement).style.display = "none");
+     
 
-      const canvas = await html2canvas(invoiceRef.current, { scale: 2 });
-      const imgData = canvas.toDataURL("image/png");
-      const pdf = new jsPDF("p", "mm", "a4");
+  // Hide controls
+   // Hide controls
+  const buttons = invoiceRef.current.querySelectorAll(".no-print");
+  buttons.forEach((btn) => (btn as HTMLElement).style.display = "none");
 
-      const imgProps = pdf.getImageProperties(imgData);
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+  // Render invoice to canvas
+  const canvas = await html2canvas(invoiceRef.current, { scale: 1.5 });
+  const imgData = canvas.toDataURL("image/jpeg", 0.7);
 
-      pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
-      pdf.save("invoice.pdf");
+  const pdf = new jsPDF("p", "mm", "a4");
+  const pdfWidth = pdf.internal.pageSize.getWidth();
+  const pdfHeight = pdf.internal.pageSize.getHeight();
 
-      // restore controls
-      buttons.forEach((btn) => (btn as HTMLElement).style.display = "block");
+  const topMargin = 0; // px
+  const bottomMargin = 0; // mm (≈ 2rem)
+  const usableHeight = pdfHeight - bottomMargin; 
 
-      setTimeout(() => {
-           setIsPrintable(false);
-      }, 1200);
+  const imgWidth = pdfWidth;
+  const imgHeight = (canvas.height * pdfWidth) / canvas.width;
+
+  let heightLeft = imgHeight;
+  let position = 0;
+
+  // First page with margin
+  pdf.addImage(imgData, "JPEG", 0, position + topMargin, imgWidth, imgHeight);
+  heightLeft -= usableHeight;
+
+  // Additional pages
+  while (heightLeft > 0) {
+    position = heightLeft - imgHeight + topMargin;
+    pdf.addPage();
+    pdf.addImage(imgData, "JPEG", 0, position, imgWidth, imgHeight);
+    heightLeft -= usableHeight;
+  }
+
+  pdf.save("invoice.pdf");
+
+  // Restore controls
+  buttons.forEach((btn) => (btn as HTMLElement).style.display = "block");
+
+  setTimeout(() => setIsPrintable(false), 1200);
     }
      }, 500);
   
