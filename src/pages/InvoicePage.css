@@ -1,0 +1,74 @@
+:root {
+  --gold: #d4af37;
+  --black: #111;
+  --white: #fff;
+}
+.invoice-container {
+  padding: 40px;
+  background: white;
+  font-family: Arial, sans-serif;
+  color: #000;
+  /* min-height: 100vh; */
+}
+
+/* Watermark */
+.invoice-watermark {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-25deg);
+  font-size: 100px;
+  font-weight: 900;
+  color: rgba(212, 175, 55, 0.08);
+  white-space: nowrap;
+  text-align: center;
+  z-index: 0;
+  pointer-events: none;
+  user-select: none;
+}
+
+.print-button{
+    width: 100%;
+    display: flex;
+    justify-content: flex-end;
+    cursor:pointer;
+    margin-bottom: 8px;
+
+
+}
+.pdf-button{
+    min-width: max-content;
+    height: 44px;
+    color: var(--white);
+    background: var(--gold);
+    border: none;
+    padding: 8px;
+    font-size: 20px;
+    cursor: pointer;
+    border-radius: 7px;
+}
+
+/* Invoice Box */
+.my-invoice {
+  position: relative;
+  background: #fff;
+  border: 2px solid #000;
+  padding: 30px;
+  z-index: 1;
+  max-width: 1000px;
+  margin: auto;
+  box-sizing: border-box;
+}
+
+ 
+
+  
+ @media (max-width: 768px) {
+.invoice-container {
+  position: relative;
+  padding: 12px;
+  width: max-content;
+  
+}
+
+ }

@@ -1,0 +1,68 @@
+.invoice-terms {
+  margin-top: 20px;
+}
+
+.term-block {
+  margin-bottom: 15px;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background: #fafafa;
+}
+
+.term-title {
+  font-weight: bold;
+  display: block;
+  width: 100%;
+  margin-bottom: 5px;
+  border: none;
+  border-bottom: 1px solid #ccc;
+  font-size: 14px;
+  padding: 4px;
+}
+
+.term-text {
+  width: 100%;
+  resize: vertical;
+  font-size: 14px;
+  padding: 6px;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+  margin-bottom: 5px;
+}
+
+.remove-btn,
+.add-btn {
+  margin-top: 5px;
+  padding: 5px 10px;
+  font-size: 13px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.remove-btn {
+  background: #f44336;
+  color: white;
+}
+
+.add-btn {
+  background: #4caf50;
+  color: white;
+}
+
+ 
+
+.printable-terms h5 {
+  color: var(--gold);
+  margin-bottom: 6px;
+}
+
+ 
+
+.printable-text {
+  white-space: pre-line; /* keeps line breaks */
+  font-size: 14px;
+  color: black;
+}
+ 

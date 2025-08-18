@@ -1,0 +1,22 @@
+ :root {
+  --gold: #D4AF37;
+  --black: #000000;
+  --white: #ffffff;
+}
+
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background-color: var(--white);
+  color: var(--black);
+}
+/* Hide watermark + buttons when printing */
+.no-print {
+  display: none !important;
+}
+
+@media screen {
+  .no-print {
+    display: block;
+  }
+}

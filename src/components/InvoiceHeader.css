@@ -1,0 +1,101 @@
+.invoice-box-2 {
+  padding: 20px;
+  border-bottom: 1px solid #ddd;
+  margin-bottom: 20px;
+}
+.invoice-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  border-bottom: 2px solid var(--gold);
+  padding-bottom: 10px;
+  margin-bottom: 15px;
+}
+
+.invoice-logo {
+  height: 50px;
+  margin-bottom: 8px;
+  
+}
+
+.invoice-subtitle {
+  font-size: 14px;
+  font-weight: bold;
+  color: var(--gold);
+  margin-top: 5px;
+  cursor: pointer;
+}
+
+.invoice-subtitle-input {
+  font-size: 14px;
+  font-weight: bold;
+  padding: 4px 6px;
+  border: 1px solid #d4af37;
+  border-radius: 4px;
+  outline: none;
+  color: #000;
+  background: #fff;
+  width: 100%;
+}
+
+.invoice-title h1 {
+  font-size: 24px;
+  font-weight: bold;
+  color: var(--black);
+  margin: 0;
+}
+
+.invoice-title p {
+  font-size: 14px;
+  color: var(--gold);
+  margin: 0;
+}
+
+.invoice-info {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.invoice-info label {
+  font-weight: bold;
+  font-size: 13px;
+  color: var(--black);
+}
+
+.invoice-info input {
+  border: 1px solid var(--gold);
+  padding: 5px 8px;
+  border-radius: 6px;
+  outline: none;
+  font-size: 13px;
+  margin-top: 5px;
+  color: var(--black);
+}
+.invoice-printable{
+    display: flex;
+    justify-content: flex-start;
+    gap: 4px;
+    align-items: center;
+
+}
+ 
+.invoice-dates{
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.billTo{
+    font-size: 16px;
+    font-weight: 600;
+    
+}
+
+.datesText{
+     font-size: 14px;
+    font-weight: 500;
+
+}

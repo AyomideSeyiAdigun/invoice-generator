@@ -1,0 +1,131 @@
+/* ======================
+   GLOBAL THEME COLORS
+====================== */
+:root {
+  --gold: #d4af37;
+  --black: #111;
+  --white: #fff;
+  --gray: #f9f9f9;
+  --danger: #e63946; /* red for remove button */
+}
+
+
+
+/* ======================
+   TABLE
+====================== */
+.invoice-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 20px;
+}
+
+.invoice-table th,
+.invoice-table td {
+  border: 1px solid var(--gold);
+  padding: 10px;
+  font-size: 13px;
+  text-align: left;
+}
+
+.invoice-table th {
+  background: var(--black);
+  color: var(--white);
+  font-weight: bold;
+}
+
+.invoice-table td input {
+  width: calc(100% - 12px);
+  padding: 6px;
+  border: none;
+  outline: none;
+  font-size: 13px;
+}
+
+/* ======================
+   BUTTONS
+====================== */
+.action-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-top: 15px;
+  flex-wrap: wrap;
+}
+
+.btn {
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  border: none;
+  transition: all 0.3s ease;
+}
+
+/* Gold button */
+.btn-add {
+  background: var(--gold);
+  color: var(--white);
+}
+
+.btn-add:hover {
+  background: #b9972f;
+}
+
+/* Red button */
+.btn-remove {
+  background: var(--danger);
+  color: var(--white);
+}
+
+.btn-remove:hover {
+  background: #c72d3a;
+}
+
+.total-amount{
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 6px;
+}
+
+.total-amount h4{
+    color: var(--gold);
+}
+.total-text{
+    font-size: 16px;
+    font-weight: 600;
+}
+
+/* ======================
+   RESPONSIVE
+====================== */
+@media (max-width: 768px) {
+  .invoice-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .invoice-info {
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .invoice-table th,
+  .invoice-table td {
+    font-size: 12px;
+    padding: 8px;
+  }
+
+  .btn {
+    width: 100%;
+    text-align: center;
+  }
+
+  .action-buttons {
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+}
