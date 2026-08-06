@@ -1,101 +1,184 @@
-.invoice-box-2 {
-  padding: 20px;
+.boq-header {
+  position: relative;
+  padding: 20px 20px 24px;
   border-bottom: 1px solid #ddd;
   margin-bottom: 20px;
 }
-.invoice-header {
+
+/* Decorative brand accent - the Panto "P" mark, echoed large in the corner.
+   Scales to the full height of the header block (logo row through the
+   underlined document title), width follows automatically since the
+   mark's viewBox is square. */
+.boq-brand-accent {
+  position: absolute;
+  top: 0;
+  left: -20px;
+  height: 100%;
+  width: auto;
+  opacity: 0.9;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.boq-header-top {
+  position: relative;
+  z-index: 1;
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.boq-logo-lockup {
+  position: absolute;
+  right: 0;
+  top: 0;
+  display: flex;
   align-items: center;
-  flex-wrap: wrap;
-  border-bottom: 2px solid var(--gold);
-  padding-bottom: 10px;
-  margin-bottom: 15px;
+  gap: 8px;
 }
 
-.invoice-logo {
-  height: 50px;
-  margin-bottom: 8px;
-  
+.boq-logo-mark {
+  height: 32px;
+  width: auto;
 }
 
-.invoice-subtitle {
-  font-size: 14px;
-  font-weight: bold;
-  color: var(--gold);
-  margin-top: 5px;
-  cursor: pointer;
-}
-
-.invoice-subtitle-input {
-  font-size: 14px;
-  font-weight: bold;
-  padding: 4px 6px;
-  border: 1px solid #d4af37;
-  border-radius: 4px;
-  outline: none;
-  color: #000;
-  background: #fff;
-  width: 100%;
-}
-
-.invoice-title h1 {
-  font-size: 24px;
-  font-weight: bold;
-  color: var(--black);
-  margin: 0;
-}
-
-.invoice-title p {
-  font-size: 14px;
-  color: var(--gold);
-  margin: 0;
-}
-
-.invoice-info {
+.boq-logo-text {
   display: flex;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  margin-bottom: 20px;
+  flex-direction: column;
+  line-height: 1;
 }
 
-.invoice-info label {
-  font-weight: bold;
-  font-size: 13px;
+.boq-logo-panto {
+  font-size: 20px;
+  font-weight: 800;
   color: var(--black);
+  letter-spacing: 0.5px;
 }
 
-.invoice-info input {
+.boq-logo-interiors {
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--gold);
+  letter-spacing: 2px;
+  margin-top: 2px;
+}
+
+.boq-date-block {
+  margin-top: 46px;
+}
+
+.boq-date-block input {
   border: 1px solid var(--gold);
   padding: 5px 8px;
   border-radius: 6px;
   outline: none;
   font-size: 13px;
-  margin-top: 5px;
   color: var(--black);
 }
-.invoice-printable{
-    display: flex;
-    justify-content: flex-start;
-    gap: 4px;
-    align-items: center;
 
-}
- 
-.invoice-dates{
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
+.boq-date-text {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--black);
+  letter-spacing: 0.5px;
 }
 
-.billTo{
-    font-size: 16px;
-    font-weight: 600;
-    
+.boq-client-block {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  margin-top: 10px;
 }
 
-.datesText{
-     font-size: 14px;
-    font-weight: 500;
+.boq-client-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
 
+.boq-client-label {
+  font-weight: bold;
+  font-size: 15px;
+  color: var(--black);
+}
+
+.boq-client-value {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--black);
+}
+
+.boq-client-input {
+  border: 1px solid var(--gold);
+  padding: 5px 8px;
+  border-radius: 6px;
+  outline: none;
+  font-size: 15px;
+  font-weight: 600;
+  min-width: 240px;
+  text-align: center;
+}
+
+.boq-project-input {
+  margin-top: 6px;
+  border: 1px solid var(--gold);
+  padding: 5px 8px;
+  border-radius: 6px;
+  outline: none;
+  font-size: 13px;
+  min-width: 280px;
+  text-align: center;
+}
+
+.boq-project-value {
+  margin-top: 4px;
+  font-size: 13px;
+  color: #333;
+}
+
+.boq-title-block {
+  position: relative;
+  z-index: 1;
+  margin-top: 18px;
+  text-align: center;
+}
+
+.boq-doc-title {
+  display: inline-block;
+  font-size: 16px;
+  font-weight: bold;
+  text-decoration: underline;
+  color: var(--black);
+  margin: 0;
+}
+
+.boq-title-input {
+  width: 100%;
+  max-width: 520px;
+  border: 1px solid var(--gold);
+  padding: 6px 8px;
+  border-radius: 6px;
+  outline: none;
+  font-size: 14px;
+  font-weight: bold;
+  text-align: center;
+}
+
+@media (max-width: 768px) {
+  .boq-header-top {
+    justify-content: center;
+  }
+
+  .boq-logo-lockup {
+    position: static;
+    margin-bottom: 8px;
+  }
+
+  .boq-date-block {
+    margin-top: 0;
+  }
 }

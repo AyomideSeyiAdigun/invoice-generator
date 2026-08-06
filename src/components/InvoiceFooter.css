@@ -1,0 +1,77 @@
+.invoice-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 20px 32px;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 2px solid var(--black);
+}
+
+.footer-contacts {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.footer-line {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #333;
+}
+
+.footer-icon {
+  width: 14px;
+  height: 14px;
+  color: var(--gold);
+  flex-shrink: 0;
+}
+
+.footer-value {
+  color: #333;
+}
+
+.footer-sep {
+  color: var(--gold);
+  margin: 0 2px;
+}
+
+.footer-line input {
+  border: 1px solid var(--gold);
+  border-radius: 4px;
+  padding: 3px 6px;
+  font-size: 12px;
+  outline: none;
+  min-width: 90px;
+}
+
+.footer-logos {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  flex-wrap: wrap;
+}
+
+.footer-logo-img {
+  height: 38px;
+  width: auto;
+  max-width: 110px;
+  object-fit: contain;
+}
+
+@media (max-width: 768px) {
+  .invoice-footer {
+    justify-content: flex-start;
+  }
+
+  .footer-logos {
+    gap: 14px;
+  }
+
+  .footer-logo-img {
+    height: 30px;
+  }
+}

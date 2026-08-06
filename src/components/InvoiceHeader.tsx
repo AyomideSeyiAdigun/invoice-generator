@@ -1,95 +1,99 @@
 import React, { useEffect, useState } from "react";
-import logo from "../assets/logo.jpeg";
+import pantoMark from "../assets/panto-mark.svg";
 import "./InvoiceHeader.css";
 
-interface InvoiceTermsProps {
+interface InvoiceHeaderProps {
   isPrintable?: boolean;
 }
 
-const InvoiceHeader: React.FC<InvoiceTermsProps> = ({isPrintable}) => {
-  const [invoiceNumber, setInvoiceNumber] = useState<number>(0);
-  const [billTo, setBillTo] = useState<string>("");
+const formatDate = (isoDate: string) => {
+  if (!isoDate) return "";
+  const d = new Date(`${isoDate}T00:00:00`);
+  if (isNaN(d.getTime())) return "";
+  return d
+    .toLocaleDateString("en-US", { month: "long", day: "2-digit", year: "numeric" })
+    .toUpperCase();
+};
+
+const InvoiceHeader: React.FC<InvoiceHeaderProps> = ({ isPrintable }) => {
+  const [clientName, setClientName] = useState<string>("");
+  const [projectType, setProjectType] = useState<string>("");
   const [date, setDate] = useState<string>("");
-  const [dueDate, setDueDate] = useState<string>("");
-  const [subtitle, setSubtitle] = useState<string>(
-    "PANTO INTERIORS - FACILITY MANAGEMENT"
+  const [documentTitle, setDocumentTitle] = useState<string>(
+    "BILL OF QUANTITY- RENOVATION, FURNISHING AND DESIGN (INTERIOR)"
   );
-  const [isEditingSubtitle, setIsEditingSubtitle] = useState<boolean>(false);
 
   useEffect(() => {
-    setInvoiceNumber(Math.floor(Math.random() * 1000)); // random invoice number
-
     const today = new Date().toISOString().split("T")[0];
     setDate(today);
-
-    const nextWeek = new Date();
-    nextWeek.setDate(nextWeek.getDate() + 7);
-    setDueDate(nextWeek.toISOString().split("T")[0]);
   }, []);
 
   return (
-    <div className="invoice-box-2">
-      {/* Header */}
-      <div className="invoice-header">
-        <div>
-          <img src={logo} alt="Panto Interiors" className="invoice-logo" />
+    <div className="boq-header">
+      <img src={pantoMark} alt="" className="boq-brand-accent" />
 
-          {isEditingSubtitle ? (
+      <div className="boq-header-top">
+        <div className="boq-logo-lockup">
+          <img src={pantoMark} alt="Panto Interiors" className="boq-logo-mark" />
+          <div className="boq-logo-text">
+            <span className="boq-logo-panto">panto</span>
+            <span className="boq-logo-interiors">INTERIORS</span>
+          </div>
+        </div>
+
+        <div className="boq-date-block">
+          {!isPrintable ? (
             <input
-              type="text"
-              value={subtitle}
-              className="invoice-subtitle-input"
-              onChange={(e) => setSubtitle(e.target.value)}
-              onBlur={() => setIsEditingSubtitle(false)}
-              autoFocus
-            />
-          ) : (
-            <h2
-              className="invoice-subtitle"
-              onClick={() => setIsEditingSubtitle(true)}
-              title="Click to edit"
-            >
-              {subtitle}
-            </h2>
-          )}
-        </div>
-
-        <div className="invoice-title">
-          <h1>INVOICE</h1>
-          <p>#{invoiceNumber.toString().padStart(3, "0")}</p>
-        </div>
-      </div>
-
-      {/* Bill To + Dates */}
-      <div className="invoice-info">
-        <div className="invoice-printable">
-          <label>Bill To:</label>
-          {!isPrintable ?<input
-            type="text"
-            value={billTo}
-            placeholder="Enter client name"
-            onChange={(e) => setBillTo(e.target.value)}
-          />:<div className="billTo">{billTo}</div>}
-        </div>
-
-        <div className="invoice-dates">
-          <div className="invoice-printable">
-            <label>Date:</label>
-            { !isPrintable ?<input
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-            />:<div  className="datesText">{date}</div>}
-          </div>
-          <div className="invoice-printable">
-            <label>Due Date:</label>
-            {!isPrintable?<input
-              type="date"
-              value={dueDate}
-              onChange={(e) => setDueDate(e.target.value)}
-            />:<div className="datesText">{dueDate}</div>}
-          </div>
+            />
+          ) : (
+            <div className="boq-date-text">{formatDate(date)}</div>
+          )}
         </div>
+      </div>
+
+      <div className="boq-client-block">
+        <div className="boq-client-row">
+          <span className="boq-client-label">CLIENT:</span>
+          {!isPrintable ? (
+            <input
+              type="text"
+              className="boq-client-input"
+              value={clientName}
+              placeholder="Enter client name"
+              onChange={(e) => setClientName(e.target.value)}
+            />
+          ) : (
+            <span className="boq-client-value">{clientName}</span>
+          )}
+        </div>
+
+        {!isPrintable ? (
+          <input
+            type="text"
+            className="boq-project-input"
+            value={projectType}
+            placeholder="(e.g. Commercial - Office Project)"
+            onChange={(e) => setProjectType(e.target.value)}
+          />
+        ) : (
+          projectType && <div className="boq-project-value">({projectType})</div>
+        )}
+      </div>
+
+      <div className="boq-title-block">
+        {!isPrintable ? (
+          <input
+            type="text"
+            className="boq-title-input"
+            value={documentTitle}
+            onChange={(e) => setDocumentTitle(e.target.value)}
+          />
+        ) : (
+          <h2 className="boq-doc-title">{documentTitle}</h2>
+        )}
       </div>
     </div>
   );
