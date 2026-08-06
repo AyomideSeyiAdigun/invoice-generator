@@ -47,34 +47,126 @@ const InvoicePage: React.FC = () => {
 
     await waitForImages(node);
 
-    // Render invoice to canvas
-    const canvas = await html2canvas(node, { scale: 1.5, useCORS: true });
-    const imgData = canvas.toDataURL("image/jpeg", 0.7);
+    // A page footer has to be redrawn on every page, but html2canvas only
+    // gives us one flat image of the whole document that we then slice into
+    // page-sized chunks — an element is just pixels wherever it happened to
+    // land, so it only ever shows up once. Capture the footer on its own,
+    // hide it, capture the rest of the content as the sliceable body, then
+    // composite the footer onto the bottom of every page. The top-right
+    // header cluster stays a small corner overlay (no reserved space
+    // needed, unlike the full-width footer) redrawn at the same spot on
+    // every page, on top of whatever body content is already there.
+    const footer = node.querySelector<HTMLElement>(".invoice-footer");
+    // .boq-header-top is a flex row with justify-content:flex-end, so its
+    // own box spans the full available width even though its content
+    // (logo + date) hugs the right edge — cropping that box would drag in
+    // whatever sits to the left (the decorative background mark). Use the
+    // union of the two actual visible children instead.
+    const logoLockup = node.querySelector<HTMLElement>(".boq-logo-lockup");
+    const dateBlock = node.querySelector<HTMLElement>(".boq-date-block");
+
+    let footerCanvas: HTMLCanvasElement | null = null;
+    if (footer) {
+      footerCanvas = await html2canvas(footer, { scale: 1.5, useCORS: true });
+      footer.style.display = "none";
+    }
+
+    // px -> mm using the live, unscaled DOM so it lines up regardless of
+    // the html2canvas capture scale.
+    const nodeRectLive = node.getBoundingClientRect();
+    let headerRectLive: DOMRect | null = null;
+    if (logoLockup && dateBlock) {
+      const a = logoLockup.getBoundingClientRect();
+      const b = dateBlock.getBoundingClientRect();
+      const left = Math.min(a.left, b.left);
+      const top = Math.min(a.top, b.top);
+      const right = Math.max(a.right, b.right);
+      const bottom = Math.max(a.bottom, b.bottom);
+      headerRectLive = new DOMRect(left, top, right - left, bottom - top);
+    }
+
+    const bodyCanvas = await html2canvas(node, { scale: 1.5, useCORS: true });
+
+    if (footer) {
+      footer.style.display = "";
+    }
 
     const pdf = new jsPDF("p", "mm", "a4");
     const pdfWidth = pdf.internal.pageSize.getWidth();
     const pdfHeight = pdf.internal.pageSize.getHeight();
 
-    const topMargin = 0; // px
-    const bottomMargin = 0; // mm (≈ 2rem)
-    const usableHeight = pdfHeight - bottomMargin;
-
     const imgWidth = pdfWidth;
-    const imgHeight = (canvas.height * pdfWidth) / canvas.width;
+    const bodyImgHeight = (bodyCanvas.height * imgWidth) / bodyCanvas.width;
+    const bodyImgData = bodyCanvas.toDataURL("image/jpeg", 0.7);
 
-    let heightLeft = imgHeight;
+    let footerImgHeight = 0;
+    let footerImgData: string | null = null;
+    if (footerCanvas) {
+      footerImgHeight = (footerCanvas.height * imgWidth) / footerCanvas.width;
+      footerImgData = footerCanvas.toDataURL("image/png");
+    }
+
+    // Crop the header straight out of the already-rendered body canvas
+    // rather than running html2canvas on it separately — a second capture
+    // of an element sharing an asset (the logo SVG, reused in the page's
+    // large decorative background mark) with content still to be captured
+    // corrupts that later render.
+    let headerImgData: string | null = null;
+    let headerXMm = 0;
+    let headerYMm = 0;
+    let headerWidthMm = 0;
+    let headerHeightMm = 0;
+    if (headerRectLive) {
+      const mmPerPxLive = 210 / nodeRectLive.width; // A4 width in mm
+      headerXMm = (headerRectLive.left - nodeRectLive.left) * mmPerPxLive;
+      headerYMm = (headerRectLive.top - nodeRectLive.top) * mmPerPxLive;
+      headerWidthMm = headerRectLive.width * mmPerPxLive;
+      headerHeightMm = headerRectLive.height * mmPerPxLive;
+
+      const scaleX = bodyCanvas.width / nodeRectLive.width;
+      const scaleY = bodyCanvas.height / nodeRectLive.height;
+      const srcX = (headerRectLive.left - nodeRectLive.left) * scaleX;
+      const srcY = (headerRectLive.top - nodeRectLive.top) * scaleY;
+      const srcW = headerRectLive.width * scaleX;
+      const srcH = headerRectLive.height * scaleY;
+
+      const cropCanvas = document.createElement("canvas");
+      cropCanvas.width = srcW;
+      cropCanvas.height = srcH;
+      const ctx = cropCanvas.getContext("2d");
+      ctx?.drawImage(bodyCanvas, srcX, srcY, srcW, srcH, 0, 0, srcW, srcH);
+      headerImgData = cropCanvas.toDataURL("image/png");
+    }
+
+    // Body text should break ~16px above the footer, not run flush into it.
+    const footerGapMm = (16 / 96) * 25.4;
+    const footerReserve = footerImgData ? footerImgHeight + footerGapMm : 0;
+    const pageContentHeight = pdfHeight - footerReserve;
+
+    let heightLeft = bodyImgHeight;
     let position = 0;
+    let pageIndex = 0;
 
-    // First page with margin
-    pdf.addImage(imgData, "JPEG", 0, position + topMargin, imgWidth, imgHeight);
-    heightLeft -= usableHeight;
-
-    // Additional pages
-    while (heightLeft > 0) {
-      position = heightLeft - imgHeight + topMargin;
-      pdf.addPage();
-      pdf.addImage(imgData, "JPEG", 0, position, imgWidth, imgHeight);
-      heightLeft -= usableHeight;
+    while (heightLeft > 0 || pageIndex === 0) {
+      if (pageIndex > 0) pdf.addPage();
+      // The body image is placed at a rising negative offset each page so
+      // only the current slice falls within the page bounds — content past
+      // the edges simply isn't drawn.
+      pdf.addImage(bodyImgData, "JPEG", 0, -position, imgWidth, bodyImgHeight);
+      if (headerImgData) {
+        // Mask whatever body content bled into the header's footprint, then
+        // draw the running header on top of it, at the same spot it
+        // occupies on the first page.
+        pdf.setFillColor(255, 255, 255);
+        pdf.rect(headerXMm, headerYMm, headerWidthMm, headerHeightMm, "F");
+        pdf.addImage(headerImgData, "PNG", headerXMm, headerYMm, headerWidthMm, headerHeightMm);
+      }
+      if (footerImgData) {
+        pdf.addImage(footerImgData, "PNG", 0, pdfHeight - footerImgHeight, imgWidth, footerImgHeight);
+      }
+      position += pageContentHeight;
+      heightLeft -= pageContentHeight;
+      pageIndex++;
     }
 
     pdf.save("invoice.pdf");

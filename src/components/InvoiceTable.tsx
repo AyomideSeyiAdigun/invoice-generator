@@ -6,6 +6,7 @@ interface RowItem {
   description: string;
   qty: string; // free text, e.g. "9", "3 ROLL", "SUM"
   unitRate: string; // stored as raw string
+  timeline: string;
   isEditingRate?: boolean;
 }
 
@@ -28,6 +29,7 @@ const newRow = (): RowItem => ({
   description: "",
   qty: "1",
   unitRate: "0",
+  timeline: "",
   isEditingRate: false,
 });
 
@@ -40,6 +42,7 @@ const newSection = (): Section => ({
 
 const InvoiceTable: React.FC<InvoiceTableProps> = ({ isPrintable }) => {
   const [sections, setSections] = useState<Section[]>([newSection()]);
+  const [showTimeline, setShowTimeline] = useState<boolean>(true);
 
   // Format helper: ₦ with commas and decimals
   const formatToNaira = (value: string) => {
@@ -107,7 +110,7 @@ const InvoiceTable: React.FC<InvoiceTableProps> = ({ isPrintable }) => {
   const updateRow = (
     sectionId: string,
     rowId: string,
-    field: "description" | "qty" | "unitRate" | "isEditingRate",
+    field: "description" | "qty" | "unitRate" | "timeline" | "isEditingRate",
     value: string | boolean
   ) => {
     setSections((prev) =>
@@ -129,14 +132,23 @@ const InvoiceTable: React.FC<InvoiceTableProps> = ({ isPrintable }) => {
     );
   };
 
-  const dataColSpan = 5; // Description, Qty, Unit Rate, Total Rate, Timeline
+  // Description, Qty, Unit Rate, Total Rate, + Timeline when shown
+  const dataColSpan = showTimeline ? 5 : 4;
 
   return (
     <div className="invoice-table-wrapper">
-      <div className="total-amount">
-        <h4>Grand Total:</h4>
-        <div className="total-text">{formatToNaira(grandTotal.toString())}</div>
-      </div>
+      {!isPrintable && (
+        <div className="table-controls no-print">
+          <label className="timeline-toggle">
+            <input
+              type="checkbox"
+              checked={showTimeline}
+              onChange={(e) => setShowTimeline(e.target.checked)}
+            />
+            Include Timeline column
+          </label>
+        </div>
+      )}
 
       <table className="invoice-table boq-table">
         <thead>
@@ -145,7 +157,7 @@ const InvoiceTable: React.FC<InvoiceTableProps> = ({ isPrintable }) => {
             <th>Qty</th>
             <th>Unit Rate (₦)</th>
             <th>Total Rate (₦)</th>
-            <th>Timeline</th>
+            {showTimeline && <th>Timeline</th>}
             {!isPrintable && <th className="no-print">Actions</th>}
           </tr>
         </thead>
@@ -164,7 +176,7 @@ const InvoiceTable: React.FC<InvoiceTableProps> = ({ isPrintable }) => {
                       }
                     />
                   ) : (
-                    <strong>{section.title}</strong>
+                    <span className="section-title-text">{section.title}</span>
                   )}
                 </td>
                 {!isPrintable && (
@@ -180,7 +192,7 @@ const InvoiceTable: React.FC<InvoiceTableProps> = ({ isPrintable }) => {
               </tr>
 
               {section.rows.map((row) => (
-                <tr key={row.id}>
+                <tr key={row.id} className="item-row">
                   <td data-label="Description">
                     <input
                       type="text"
@@ -215,7 +227,21 @@ const InvoiceTable: React.FC<InvoiceTableProps> = ({ isPrintable }) => {
 
                   <td data-label="Total Rate">{formatToNaira(rowTotal(row).toString())}</td>
 
-                  <td data-label="Timeline"></td>
+                  {showTimeline && (
+                    <td data-label="Timeline">
+                      {!isPrintable ? (
+                        <input
+                          type="text"
+                          value={row.timeline}
+                          onChange={(e) =>
+                            updateRow(section.id, row.id, "timeline", e.target.value)
+                          }
+                        />
+                      ) : (
+                        row.timeline
+                      )}
+                    </td>
+                  )}
 
                   {!isPrintable && (
                     <td className="no-print">
@@ -232,20 +258,22 @@ const InvoiceTable: React.FC<InvoiceTableProps> = ({ isPrintable }) => {
                 <td className="subtotal-amount-cell">
                   {formatToNaira(sectionSubtotal(section).toString())}
                 </td>
-                <td className="subtotal-timeline-cell">
-                  {!isPrintable ? (
-                    <input
-                      type="text"
-                      placeholder="e.g. 5 Days"
-                      value={section.timeline}
-                      onChange={(e) =>
-                        updateSectionField(section.id, "timeline", e.target.value)
-                      }
-                    />
-                  ) : (
-                    section.timeline
-                  )}
-                </td>
+                {showTimeline && (
+                  <td className="subtotal-timeline-cell">
+                    {!isPrintable ? (
+                      <input
+                        type="text"
+                        placeholder="e.g. 5 Days"
+                        value={section.timeline}
+                        onChange={(e) =>
+                          updateSectionField(section.id, "timeline", e.target.value)
+                        }
+                      />
+                    ) : (
+                      section.timeline
+                    )}
+                  </td>
+                )}
                 {!isPrintable && (
                   <td className="no-print">
                     <button onClick={() => addRow(section.id)}>+ Row</button>
@@ -256,9 +284,9 @@ const InvoiceTable: React.FC<InvoiceTableProps> = ({ isPrintable }) => {
           ))}
 
           <tr className="grand-total-row">
-            <td colSpan={3}>GRAND TOTAL</td>
+            <td colSpan={3}>TOTAL</td>
             <td>{formatToNaira(grandTotal.toString())}</td>
-            <td></td>
+            {showTimeline && <td></td>}
             {!isPrintable && <td className="no-print"></td>}
           </tr>
         </tbody>
