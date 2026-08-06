@@ -1,74 +1,21 @@
-import React, { useState } from "react";
+import React from "react";
+import type { Section } from "../types/invoice";
+import { formatToNaira, newRow, newSection, rowTotal, sectionSubtotal } from "../utils/invoiceCalc";
 import './InvoiceTable.css';
 
-interface RowItem {
-  id: string;
-  description: string;
-  qty: string; // free text, e.g. "9", "3 ROLL", "SUM"
-  unitRate: string; // stored as raw string
-  timeline: string;
-  isEditingRate?: boolean;
-}
-
-interface Section {
-  id: string;
-  title: string;
-  timeline: string;
-  rows: RowItem[];
-}
-
 interface InvoiceTableProps {
-  isPrintable?: boolean;
+  sections: Section[];
+  setSections: React.Dispatch<React.SetStateAction<Section[]>>;
+  showTimeline: boolean;
+  setShowTimeline: (value: boolean) => void;
 }
 
-let idCounter = 0;
-const genId = () => `id-${Date.now()}-${idCounter++}`;
-
-const newRow = (): RowItem => ({
-  id: genId(),
-  description: "",
-  qty: "1",
-  unitRate: "0",
-  timeline: "",
-  isEditingRate: false,
-});
-
-const newSection = (): Section => ({
-  id: genId(),
-  title: "NEW SECTION:",
-  timeline: "",
-  rows: [newRow()],
-});
-
-const InvoiceTable: React.FC<InvoiceTableProps> = ({ isPrintable }) => {
-  const [sections, setSections] = useState<Section[]>([newSection()]);
-  const [showTimeline, setShowTimeline] = useState<boolean>(true);
-
-  // Format helper: ₦ with commas and decimals
-  const formatToNaira = (value: string) => {
-    if (!value) return "₦0.00";
-    const num = parseFloat(value.replace(/,/g, ""));
-    if (isNaN(num)) return "₦0.00";
-    return `₦${num.toLocaleString("en-NG", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })}`;
-  };
-
-  // Leading number in a free-text qty (e.g. "3 ROLL" -> 3, "SUM" -> 1)
-  const qtyMultiplier = (qty: string): number => {
-    const match = qty.match(/[\d.]+/);
-    if (!match) return 1;
-    const n = parseFloat(match[0]);
-    return isNaN(n) || n <= 0 ? 1 : n;
-  };
-
-  const rowTotal = (row: RowItem): number =>
-    qtyMultiplier(row.qty) * (parseFloat(row.unitRate) || 0);
-
-  const sectionSubtotal = (section: Section): number =>
-    section.rows.reduce((sum, row) => sum + rowTotal(row), 0);
-
+const InvoiceTable: React.FC<InvoiceTableProps> = ({
+  sections,
+  setSections,
+  showTimeline,
+  setShowTimeline,
+}) => {
   const grandTotal = sections.reduce((sum, s) => sum + sectionSubtotal(s), 0);
 
   const updateSectionField = (
@@ -110,8 +57,8 @@ const InvoiceTable: React.FC<InvoiceTableProps> = ({ isPrintable }) => {
   const updateRow = (
     sectionId: string,
     rowId: string,
-    field: "description" | "qty" | "unitRate" | "timeline" | "isEditingRate",
-    value: string | boolean
+    field: "description" | "qty" | "unitRate" | "timeline",
+    value: string
   ) => {
     setSections((prev) =>
       prev.map((s) => {
@@ -121,7 +68,7 @@ const InvoiceTable: React.FC<InvoiceTableProps> = ({ isPrintable }) => {
           rows: s.rows.map((r) => {
             if (r.id !== rowId) return r;
             if (field === "unitRate") {
-              const cleanValue = (value as string).replace(/,/g, "");
+              const cleanValue = value.replace(/,/g, "");
               if (!/^\d*\.?\d{0,2}$/.test(cleanValue)) return r;
               return { ...r, unitRate: cleanValue };
             }
@@ -137,18 +84,16 @@ const InvoiceTable: React.FC<InvoiceTableProps> = ({ isPrintable }) => {
 
   return (
     <div className="invoice-table-wrapper">
-      {!isPrintable && (
-        <div className="table-controls no-print">
-          <label className="timeline-toggle">
-            <input
-              type="checkbox"
-              checked={showTimeline}
-              onChange={(e) => setShowTimeline(e.target.checked)}
-            />
-            Include Timeline column
-          </label>
-        </div>
-      )}
+      <div className="table-controls">
+        <label className="timeline-toggle">
+          <input
+            type="checkbox"
+            checked={showTimeline}
+            onChange={(e) => setShowTimeline(e.target.checked)}
+          />
+          Include Timeline column
+        </label>
+      </div>
 
       <table className="invoice-table boq-table">
         <thead>
@@ -158,7 +103,7 @@ const InvoiceTable: React.FC<InvoiceTableProps> = ({ isPrintable }) => {
             <th>Unit Rate (₦)</th>
             <th>Total Rate (₦)</th>
             {showTimeline && <th>Timeline</th>}
-            {!isPrintable && <th className="no-print">Actions</th>}
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -166,29 +111,23 @@ const InvoiceTable: React.FC<InvoiceTableProps> = ({ isPrintable }) => {
             <React.Fragment key={section.id}>
               <tr className="section-header-row">
                 <td colSpan={dataColSpan} className="section-title-cell">
-                  {!isPrintable ? (
-                    <input
-                      type="text"
-                      className="section-title-input"
-                      value={section.title}
-                      onChange={(e) =>
-                        updateSectionField(section.id, "title", e.target.value)
-                      }
-                    />
-                  ) : (
-                    <span className="section-title-text">{section.title}</span>
-                  )}
+                  <input
+                    type="text"
+                    className="section-title-input"
+                    value={section.title}
+                    onChange={(e) =>
+                      updateSectionField(section.id, "title", e.target.value)
+                    }
+                  />
                 </td>
-                {!isPrintable && (
-                  <td className="no-print">
-                    <button
-                      className="remove-section-btn"
-                      onClick={() => removeSection(section.id)}
-                    >
-                      Remove Section
-                    </button>
-                  </td>
-                )}
+                <td>
+                  <button
+                    className="remove-section-btn"
+                    onClick={() => removeSection(section.id)}
+                  >
+                    Remove Section
+                  </button>
+                </td>
               </tr>
 
               {section.rows.map((row) => (
@@ -216,9 +155,7 @@ const InvoiceTable: React.FC<InvoiceTableProps> = ({ isPrintable }) => {
                   <td data-label="Unit Rate">
                     <input
                       type="text"
-                      value={row.isEditingRate ? row.unitRate : formatToNaira(row.unitRate)}
-                      onFocus={() => updateRow(section.id, row.id, "isEditingRate", true)}
-                      onBlur={() => updateRow(section.id, row.id, "isEditingRate", false)}
+                      value={row.unitRate}
                       onChange={(e) =>
                         updateRow(section.id, row.id, "unitRate", e.target.value)
                       }
@@ -229,25 +166,19 @@ const InvoiceTable: React.FC<InvoiceTableProps> = ({ isPrintable }) => {
 
                   {showTimeline && (
                     <td data-label="Timeline">
-                      {!isPrintable ? (
-                        <input
-                          type="text"
-                          value={row.timeline}
-                          onChange={(e) =>
-                            updateRow(section.id, row.id, "timeline", e.target.value)
-                          }
-                        />
-                      ) : (
-                        row.timeline
-                      )}
+                      <input
+                        type="text"
+                        value={row.timeline}
+                        onChange={(e) =>
+                          updateRow(section.id, row.id, "timeline", e.target.value)
+                        }
+                      />
                     </td>
                   )}
 
-                  {!isPrintable && (
-                    <td className="no-print">
-                      <button onClick={() => removeRow(section.id, row.id)}>-</button>
-                    </td>
-                  )}
+                  <td>
+                    <button onClick={() => removeRow(section.id, row.id)}>-</button>
+                  </td>
                 </tr>
               ))}
 
@@ -260,25 +191,19 @@ const InvoiceTable: React.FC<InvoiceTableProps> = ({ isPrintable }) => {
                 </td>
                 {showTimeline && (
                   <td className="subtotal-timeline-cell">
-                    {!isPrintable ? (
-                      <input
-                        type="text"
-                        placeholder="e.g. 5 Days"
-                        value={section.timeline}
-                        onChange={(e) =>
-                          updateSectionField(section.id, "timeline", e.target.value)
-                        }
-                      />
-                    ) : (
-                      section.timeline
-                    )}
+                    <input
+                      type="text"
+                      placeholder="e.g. 5 Days"
+                      value={section.timeline}
+                      onChange={(e) =>
+                        updateSectionField(section.id, "timeline", e.target.value)
+                      }
+                    />
                   </td>
                 )}
-                {!isPrintable && (
-                  <td className="no-print">
-                    <button onClick={() => addRow(section.id)}>+ Row</button>
-                  </td>
-                )}
+                <td>
+                  <button onClick={() => addRow(section.id)}>+ Row</button>
+                </td>
               </tr>
             </React.Fragment>
           ))}
@@ -287,17 +212,15 @@ const InvoiceTable: React.FC<InvoiceTableProps> = ({ isPrintable }) => {
             <td colSpan={3}>TOTAL</td>
             <td>{formatToNaira(grandTotal.toString())}</td>
             {showTimeline && <td></td>}
-            {!isPrintable && <td className="no-print"></td>}
+            <td></td>
           </tr>
         </tbody>
       </table>
 
       {/* Add Section */}
-      {!isPrintable && (
-        <div className="invoice-actions">
-          <button onClick={addSection}>+ Add Section</button>
-        </div>
-      )}
+      <div className="invoice-actions">
+        <button onClick={addSection}>+ Add Section</button>
+      </div>
     </div>
   );
 };

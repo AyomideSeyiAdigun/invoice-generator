@@ -1,35 +1,13 @@
-import React, { useState } from "react";
+import React from "react";
+import type { Term } from "../types/invoice";
 import './InvoiceTerm.css';
 
-interface Term {
-  title: string;
-  text: string;
-}
 interface InvoiceTermsProps {
-  isPrintable?: boolean;
+  terms: Term[];
+  setTerms: React.Dispatch<React.SetStateAction<Term[]>>;
 }
 
-
-const InvoiceTerms: React.FC<InvoiceTermsProps> = ({isPrintable}) => {
-  const [terms, setTerms] = useState<Term[]>([
-    {
-      title: "TERMS OF PAYMENT",
-      text: "An advance payment of 90% is required to commence work on your project and 10% balance payment upon delivery, within 48 hours.",
-    },
-    {
-      title: "BANK DETAILS",
-      text: "Panto Interiors \n 13404588A \n Providus Bank",
-    },
-    {
-      title: "CHARGE",
-      text: "The sum of 50,000 naira is to be charged for any change in scope of work that earlier agreed by both parties.",
-    },
-    {
-      title: "",
-      text: "Thank you for understanding and trusting us with your facilities.",
-    },
-  ]);
-
+const InvoiceTerms: React.FC<InvoiceTermsProps> = ({ terms, setTerms }) => {
   const handleChange = (index: number, field: keyof Term, value: string) => {
     const updated = [...terms];
     updated[index][field] = value;
@@ -47,7 +25,7 @@ const InvoiceTerms: React.FC<InvoiceTermsProps> = ({isPrintable}) => {
 
   return (
     <div className="invoice-terms">
-      { !isPrintable&& terms.map((term, index) => (
+      {terms.map((term, index) => (
         <div key={index} className="term-block">
           <input
             type="text"
@@ -71,19 +49,9 @@ const InvoiceTerms: React.FC<InvoiceTermsProps> = ({isPrintable}) => {
         </div>
       ))}
 
-
-
-       { isPrintable&& 
-       terms.map((term, index) => (
-        <div key={index} className="printable-terms">
-                 <h5>{term.title}</h5>
- 
-              <div className="printable-text ">{term.text}</div>
-        </div>
-      ))}
-     { !isPrintable&&<button onClick={addTerm} className="add-btn">
+      <button onClick={addTerm} className="add-btn">
         + Add Term
-      </button>}
+      </button>
     </div>
   );
 };
