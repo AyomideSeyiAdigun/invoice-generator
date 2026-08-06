@@ -22,7 +22,7 @@
 
 .invoice-table th,
 .invoice-table td {
-  border: 1px solid var(--gold);
+  border: 1px solid var(--black);
   padding: 10px;
   font-size: 13px;
   text-align: left;
@@ -30,9 +30,10 @@
 }
 
 .invoice-table th {
-  background: var(--black);
-  color: var(--white);
-  font-weight: bold;
+  background: none;
+  color: var(--black);
+  font-weight: normal;
+  text-transform: uppercase;
 }
 
 .invoice-table td input {
@@ -44,6 +45,11 @@
   border: none;
   outline: none;
   font-size: 13px;
+  text-align: center;
+}
+
+.invoice-table td[data-label="Description"] input {
+  text-align: left;
 }
 
 /* ======================
@@ -87,19 +93,96 @@
   background: #c72d3a;
 }
 
-.total-amount{
-    display: flex;
-    justify-content: flex-start;
-    align-items: center;
-    gap: 6px;
+.table-controls {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 8px;
 }
 
-.total-amount h4{
-    color: var(--gold);
+.timeline-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  cursor: pointer;
 }
-.total-text{
-    font-size: 16px;
-    font-weight: 600;
+
+/* ======================
+   SECTIONS
+====================== */
+.section-header-row td {
+  background: none;
+  border: none;
+}
+
+.item-row td {
+  border: none;
+}
+
+/* Keep the table's outer left/right frame intact even though item rows
+   and the section header row otherwise have no borders. */
+.item-row td:first-child,
+.section-header-row td:first-child {
+  border-left: 1px solid var(--black);
+}
+
+.item-row td:last-child,
+.section-header-row td:last-child {
+  border-right: 1px solid var(--black);
+}
+
+.section-title-text {
+  text-transform: uppercase;
+  font-size: 13px;
+  font-weight: normal;
+}
+
+.invoice-table td input.section-title-input {
+  width: 100%;
+  padding: 4px 6px;
+  border: none;
+  outline: none;
+  font-size: 13px;
+  font-weight: normal;
+  text-transform: uppercase;
+  background: transparent;
+  text-align: left;
+}
+
+.remove-section-btn {
+  background: var(--danger);
+  color: var(--white);
+  border: none;
+  border-radius: 4px;
+  padding: 6px 8px;
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.section-subtotal-row td {
+  font-weight: normal;
+}
+
+.subtotal-label-cell {
+  text-align: right !important;
+}
+
+.subtotal-timeline-cell input {
+  width: calc(100% - 12px);
+  padding: 6px;
+  border: none;
+  outline: none;
+  font-size: 13px;
+  background: transparent;
+  font-weight: normal;
+}
+
+.grand-total-row td {
+  color: var(--black);
+  font-weight: normal;
+  font-size: 14px;
+  border-top: 2px solid var(--black);
 }
 
 /* ======================

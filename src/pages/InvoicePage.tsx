@@ -1,87 +1,92 @@
-import html2canvas from "html2canvas";
-import jsPDF from "jspdf";
-import React, { useRef, useState } from "react";
+import React, { useState } from "react";
+import InvoiceFooter from "../components/InvoiceFooter";
 import InvoiceHeader from "../components/InvoiceHeader";
 import InvoiceTable from "../components/InvoiceTable";
 import InvoiceTerms from "../components/InvoiceTerms";
+import { generateInvoicePdf } from "../pdf/generateInvoicePdf";
+import type { FooterData, HeaderData, Section, Term } from "../types/invoice";
+import { newSection } from "../utils/invoiceCalc";
 import "./InvoicePage.css";
- 
 
 const InvoicePage: React.FC = () => {
-     const [isPrintable, setIsPrintable] = useState<boolean>(false);
-     
+  const [header, setHeader] = useState<HeaderData>({
+    clientName: "",
+    projectType: "",
+    date: new Date().toISOString().split("T")[0],
+    documentTitle: "BILL OF QUANTITY- RENOVATION, FURNISHING AND DESIGN (INTERIOR)",
+  });
 
-   
-    const invoiceRef = useRef<HTMLDivElement>(null);
+  const [sections, setSections] = useState<Section[]>([newSection()]);
+  const [showTimeline, setShowTimeline] = useState<boolean>(true);
+
+  const [terms, setTerms] = useState<Term[]>([
+    {
+      title: "TERMS OF PAYMENT",
+      text: "An advance payment of 90% is required to commence work on your project and 10% balance payment upon delivery, within 48 hours.",
+    },
+    {
+      title: "BANK DETAILS",
+      text: "Panto Interiors \n 13404588A \n Providus Bank",
+    },
+    {
+      title: "CHARGE",
+      text: "The sum of 50,000 naira is to be charged for any change in scope of work that earlier agreed by both parties.",
+    },
+    {
+      title: "",
+      text: "Thank you for understanding and trusting us with your facilities.",
+    },
+  ]);
+
+  const [footer, setFooter] = useState<FooterData>({
+    phone1: "09093498637",
+    phone2: "07068028522",
+    email: "pantoltd2@gmail.com",
+    instagram: "@panto_interior",
+    facebook: "/pantointerior",
+  });
+
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  const updateHeader = <K extends keyof HeaderData>(field: K, value: HeaderData[K]) =>
+    setHeader((prev) => ({ ...prev, [field]: value }));
+
+  const updateFooter = <K extends keyof FooterData>(field: K, value: FooterData[K]) =>
+    setFooter((prev) => ({ ...prev, [field]: value }));
 
   const handleDownload = async () => {
-    setIsPrintable(true);
-
-
-      setTimeout(async () => {
-          if (invoiceRef.current) {
-     
-
-  // Hide controls
-   // Hide controls
-  const buttons = invoiceRef.current.querySelectorAll(".no-print");
-  buttons.forEach((btn) => (btn as HTMLElement).style.display = "none");
-
-  // Render invoice to canvas
-  const canvas = await html2canvas(invoiceRef.current, { scale: 1.5 });
-  const imgData = canvas.toDataURL("image/jpeg", 0.7);
-
-  const pdf = new jsPDF("p", "mm", "a4");
-  const pdfWidth = pdf.internal.pageSize.getWidth();
-  const pdfHeight = pdf.internal.pageSize.getHeight();
-
-  const topMargin = 0; // px
-  const bottomMargin = 0; // mm (≈ 2rem)
-  const usableHeight = pdfHeight - bottomMargin; 
-
-  const imgWidth = pdfWidth;
-  const imgHeight = (canvas.height * pdfWidth) / canvas.width;
-
-  let heightLeft = imgHeight;
-  let position = 0;
-
-  // First page with margin
-  pdf.addImage(imgData, "JPEG", 0, position + topMargin, imgWidth, imgHeight);
-  heightLeft -= usableHeight;
-
-  // Additional pages
-  while (heightLeft > 0) {
-    position = heightLeft - imgHeight + topMargin;
-    pdf.addPage();
-    pdf.addImage(imgData, "JPEG", 0, position, imgWidth, imgHeight);
-    heightLeft -= usableHeight;
-  }
-
-  pdf.save("invoice.pdf");
-
-  // Restore controls
-  buttons.forEach((btn) => (btn as HTMLElement).style.display = "block");
-
-  setTimeout(() => setIsPrintable(false), 1200);
+    setIsGenerating(true);
+    try {
+      const doc = await generateInvoicePdf({ header, sections, showTimeline, terms, footer });
+      doc.save("invoice.pdf");
+    } finally {
+      setIsGenerating(false);
     }
-     }, 500);
-  
   };
+
   return (
     <div className="invoice-container">
       <div className="invoice-watermark">Panto Interiors</div>
 
-        <div className="print-button no-print"><button className="pdf-button" onClick={handleDownload}>Download pdf</button></div>
+      <div className="print-button no-print">
+        <button className="pdf-button" onClick={handleDownload} disabled={isGenerating}>
+          {isGenerating ? "Generating…" : "Download pdf"}
+        </button>
+      </div>
 
-      <div className="my-invoice" ref={invoiceRef}>
-        {/* Header */}
-           <InvoiceHeader  isPrintable={isPrintable}/>
+      <div className="my-invoice">
+        <InvoiceHeader data={header} onChange={updateHeader} />
 
-        {/* Dynamic Table */}
-        <InvoiceTable isPrintable={isPrintable} />
+        <InvoiceTable
+          sections={sections}
+          setSections={setSections}
+          showTimeline={showTimeline}
+          setShowTimeline={setShowTimeline}
+        />
 
-        {/* Terms */}
-        <InvoiceTerms isPrintable={isPrintable}  />
+        <InvoiceTerms terms={terms} setTerms={setTerms} />
+
+        <InvoiceFooter data={footer} onChange={updateFooter} />
       </div>
     </div>
   );

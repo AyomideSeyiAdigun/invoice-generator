@@ -1,149 +1,226 @@
-import React, { useState } from "react";
+import React from "react";
+import type { Section } from "../types/invoice";
+import { formatToNaira, newRow, newSection, rowTotal, sectionSubtotal } from "../utils/invoiceCalc";
 import './InvoiceTable.css';
 
-interface InvoiceRow {
-  item: string;
-  quantity: number;
-  rate: string; // stored as raw string
-  amount: number;
-  isEditingRate?: boolean; // flag to handle edit/display toggle
-}
-
 interface InvoiceTableProps {
-  isPrintable?: boolean;
+  sections: Section[];
+  setSections: React.Dispatch<React.SetStateAction<Section[]>>;
+  showTimeline: boolean;
+  setShowTimeline: (value: boolean) => void;
 }
 
+const InvoiceTable: React.FC<InvoiceTableProps> = ({
+  sections,
+  setSections,
+  showTimeline,
+  setShowTimeline,
+}) => {
+  const grandTotal = sections.reduce((sum, s) => sum + sectionSubtotal(s), 0);
 
-const InvoiceTable: React.FC<InvoiceTableProps> = ({isPrintable}) => {
-  const [rows, setRows] = useState<InvoiceRow[]>([
-    { item: "", quantity: 1, rate: "0", amount: 0, isEditingRate: false },
-  ]);
-
-  // Format helper: ₦ with commas and decimals
-  const formatToNaira = (value: string) => {
-    if (!value) return "₦0.00";
-    const num = parseFloat(value.replace(/,/g, ""));
-    if (isNaN(num)) return "₦0.00";
-    return `₦${num.toLocaleString("en-NG", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })}`;
+  const updateSectionField = (
+    sectionId: string,
+    field: "title" | "timeline",
+    value: string
+  ) => {
+    setSections((prev) =>
+      prev.map((s) => (s.id === sectionId ? { ...s, [field]: value } : s))
+    );
   };
 
-  const handleChange = (index: number, field: keyof InvoiceRow, value: string) => {
-    const updatedRows = [...rows];
-
-    if (field === "quantity") {
-      const qty = parseInt(value) || 0;
-      updatedRows[index].quantity = qty;
-      updatedRows[index].amount = qty * (parseFloat(updatedRows[index].rate) || 0);
-    } else if (field === "rate") {
-      const cleanValue = value.replace(/,/g, "");
-      if (/^\d*\.?\d{0,2}$/.test(cleanValue)) {
-        updatedRows[index].rate = cleanValue;
-        updatedRows[index].amount =
-          updatedRows[index].quantity * (parseFloat(cleanValue) || 0);
-      }
-    } else if (field === "item") {
-      updatedRows[index].item = value;
-    }
-
-    setRows(updatedRows);
+  const addSection = () => {
+    setSections((prev) => [...prev, newSection()]);
   };
 
-  const addRow = () => {
-    setRows([
-      ...rows,
-      { item: "", quantity: 1, rate: "0", amount: 0, isEditingRate: false },
-    ]);
+  const removeSection = (sectionId: string) => {
+    setSections((prev) => prev.filter((s) => s.id !== sectionId));
   };
 
-  const removeRow = (index: number) => {
-    setRows(rows.filter((_, i) => i !== index));
+  const addRow = (sectionId: string) => {
+    setSections((prev) =>
+      prev.map((s) =>
+        s.id === sectionId ? { ...s, rows: [...s.rows, newRow()] } : s
+      )
+    );
   };
-  const totalAmount = rows.reduce((sum, row) => sum + row.amount, 0);
-  
+
+  const removeRow = (sectionId: string, rowId: string) => {
+    setSections((prev) =>
+      prev.map((s) =>
+        s.id === sectionId
+          ? { ...s, rows: s.rows.filter((r) => r.id !== rowId) }
+          : s
+      )
+    );
+  };
+
+  const updateRow = (
+    sectionId: string,
+    rowId: string,
+    field: "description" | "qty" | "unitRate" | "timeline",
+    value: string
+  ) => {
+    setSections((prev) =>
+      prev.map((s) => {
+        if (s.id !== sectionId) return s;
+        return {
+          ...s,
+          rows: s.rows.map((r) => {
+            if (r.id !== rowId) return r;
+            if (field === "unitRate") {
+              const cleanValue = value.replace(/,/g, "");
+              if (!/^\d*\.?\d{0,2}$/.test(cleanValue)) return r;
+              return { ...r, unitRate: cleanValue };
+            }
+            return { ...r, [field]: value };
+          }),
+        };
+      })
+    );
+  };
+
+  // Description, Qty, Unit Rate, Total Rate, + Timeline when shown
+  const dataColSpan = showTimeline ? 5 : 4;
+
   return (
-    
     <div className="invoice-table-wrapper">
-         <div className="total-amount">
-        <h4>Payment Due:</h4>
-        <div className="total-text">{formatToNaira(totalAmount.toString())}</div>
+      <div className="table-controls">
+        <label className="timeline-toggle">
+          <input
+            type="checkbox"
+            checked={showTimeline}
+            onChange={(e) => setShowTimeline(e.target.checked)}
+          />
+          Include Timeline column
+        </label>
       </div>
-      <table className="invoice-table">
+
+      <table className="invoice-table boq-table">
         <thead>
           <tr>
-            <th>Item</th>
+            <th>Description</th>
             <th>Qty</th>
-            <th>Rate (₦)</th>
-            <th>Amount (₦)</th>
-            {!isPrintable && <th className="no-print">Actions</th>}
+            <th>Unit Rate (₦)</th>
+            <th>Total Rate (₦)</th>
+            {showTimeline && <th>Timeline</th>}
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
-          {rows.map((row, index) => (
-            <tr key={index}>
-              {/* Item */}
-              <td data-label="Item">
-                <input
-                  type="text"
-                  value={row.item}
-                  onChange={(e) => handleChange(index, "item", e.target.value)}
-                />
-              </td>
+          {sections.map((section) => (
+            <React.Fragment key={section.id}>
+              <tr className="section-header-row">
+                <td colSpan={dataColSpan} className="section-title-cell">
+                  <input
+                    type="text"
+                    className="section-title-input"
+                    value={section.title}
+                    onChange={(e) =>
+                      updateSectionField(section.id, "title", e.target.value)
+                    }
+                  />
+                </td>
+                <td>
+                  <button
+                    className="remove-section-btn"
+                    onClick={() => removeSection(section.id)}
+                  >
+                    Remove Section
+                  </button>
+                </td>
+              </tr>
 
-              {/* Quantity */}
-              <td data-label="Qty">
-                <input
-                  type="number"
-                  value={row.quantity}
-                  min="1"
-                  onChange={(e) => handleChange(index, "quantity", e.target.value)}
-                />
-              </td>
+              {section.rows.map((row) => (
+                <tr key={row.id} className="item-row">
+                  <td data-label="Description">
+                    <input
+                      type="text"
+                      value={row.description}
+                      onChange={(e) =>
+                        updateRow(section.id, row.id, "description", e.target.value)
+                      }
+                    />
+                  </td>
 
-              {/* Rate */}
-              <td data-label="Rate">
-                <input
-                  type="text"
-                  value={row.isEditingRate ? row.rate : formatToNaira(row.rate)}
-                  onFocus={() => {
-                    const updatedRows = [...rows];
-                    updatedRows[index].isEditingRate = true;
-                    setRows(updatedRows);
-                  }}
-                  onBlur={() => {
-                    const updatedRows = [...rows];
-                    updatedRows[index].isEditingRate = false;
-                    setRows(updatedRows);
-                  }}
-                  onChange={(e) => handleChange(index, "rate", e.target.value)}
-                />
-              </td>
+                  <td data-label="Qty">
+                    <input
+                      type="text"
+                      value={row.qty}
+                      onChange={(e) =>
+                        updateRow(section.id, row.id, "qty", e.target.value)
+                      }
+                    />
+                  </td>
 
-              {/* Amount */}
-              <td data-label="Amount">{formatToNaira(row.amount.toString())}</td>
+                  <td data-label="Unit Rate">
+                    <input
+                      type="text"
+                      value={row.unitRate}
+                      onChange={(e) =>
+                        updateRow(section.id, row.id, "unitRate", e.target.value)
+                      }
+                    />
+                  </td>
 
-              {/* Remove button */}
-               {!isPrintable && 
-              <td>
-                <button onClick={() => removeRow(index)}>-</button>
-              </td>
-               }
-            </tr>
+                  <td data-label="Total Rate">{formatToNaira(rowTotal(row).toString())}</td>
+
+                  {showTimeline && (
+                    <td data-label="Timeline">
+                      <input
+                        type="text"
+                        value={row.timeline}
+                        onChange={(e) =>
+                          updateRow(section.id, row.id, "timeline", e.target.value)
+                        }
+                      />
+                    </td>
+                  )}
+
+                  <td>
+                    <button onClick={() => removeRow(section.id, row.id)}>-</button>
+                  </td>
+                </tr>
+              ))}
+
+              <tr className="section-subtotal-row">
+                <td colSpan={3} className="subtotal-label-cell">
+                  Subtotal
+                </td>
+                <td className="subtotal-amount-cell">
+                  {formatToNaira(sectionSubtotal(section).toString())}
+                </td>
+                {showTimeline && (
+                  <td className="subtotal-timeline-cell">
+                    <input
+                      type="text"
+                      placeholder="e.g. 5 Days"
+                      value={section.timeline}
+                      onChange={(e) =>
+                        updateSectionField(section.id, "timeline", e.target.value)
+                      }
+                    />
+                  </td>
+                )}
+                <td>
+                  <button onClick={() => addRow(section.id)}>+ Row</button>
+                </td>
+              </tr>
+            </React.Fragment>
           ))}
+
+          <tr className="grand-total-row">
+            <td colSpan={3}>TOTAL</td>
+            <td>{formatToNaira(grandTotal.toString())}</td>
+            {showTimeline && <td></td>}
+            <td></td>
+          </tr>
         </tbody>
       </table>
 
-      {/* Add Row */}
-        {!isPrintable && 
+      {/* Add Section */}
       <div className="invoice-actions">
-        <button onClick={addRow}>+ Add Row</button>
+        <button onClick={addSection}>+ Add Section</button>
       </div>
-       }
-
-       
-     
     </div>
   );
 };
