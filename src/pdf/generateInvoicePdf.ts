@@ -189,7 +189,9 @@ interface Ctx {
 
 function newPage(ctx: Ctx) {
   ctx.doc.addPage();
-  addHeader(ctx.doc, ctx.assets, ctx.dateText);
+  // Only the first page's header carries the date — repeat pages show just
+  // the brand marks, no date.
+  addHeader(ctx.doc, ctx.assets, "");
   addFooter(ctx.doc, ctx.assets, ctx.footer);
   ctx.y = BODY_START_Y;
 }
